@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*build*/
+*dist*/
+*.egg-info/
+*.spec
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+*.env
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets / Config - IMPORTANT!
+.env
+*.env.*
+
+# Data / Cache / Logs
+vector_store_data/ # Directory containing FAISS index/metadata
+*.log
+*.db # If using default SQLite name outside a data folder
+*.sqlite
+*.sqlite3
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Frontend node_modules (if frontend is in the same repo)
+frontend/node_modules/
+frontend/build/
+frontend/.env*
+frontend/.pnp*
+frontend/.yarn*
