@@ -16,3 +16,4 @@ duckduckgo-search
 tiktoken # Often a dependency for text splitters
 numpy # Dependency for FAISS/embeddings
 pickle-mixin # Sometimes needed for saving FAISS metadata reliably
+"python-jose[cryptography]" "passlib[bcrypt]" fastapi[all]
