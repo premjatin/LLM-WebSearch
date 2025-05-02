@@ -1,0 +1,5 @@
+/venv
+/vector_store_data
+/__pycache__/
+/.vscode/
+/.history
