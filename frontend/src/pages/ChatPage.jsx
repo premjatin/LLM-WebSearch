@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+// src/pages/ChatPage.jsx (Previously App.jsx)
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "../context/AuthContext"; // Import useAuth
+import { sendMessage } from "../api"; // Use the centralized API call
+import { ThemeProvider } from "@mui/material/styles"; // Keep theme provider if theme is defined here // Assuming theme is defined in theme.js or here
 import CssBaseline from "@mui/material/CssBaseline";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container"; // Use Container for content width management
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import List from "@mui/material/List";
@@ -12,11 +14,12 @@ import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Alert from "@mui/material/Alert";
 import SendIcon from "@mui/icons-material/Send";
+import LogoutIcon from "@mui/icons-material/Logout"; // Logout icon
+import AppBar from "@mui/material/AppBar"; // For Header
+import Toolbar from "@mui/material/Toolbar";
+import IconButton from "@mui/material/IconButton";
 
-// API URL remains the same
-const API_URL = "http://localhost:8000/chat";
-
-// Theme remains the same
+// Define the dark theme here or import from a separate file
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
@@ -28,117 +31,121 @@ const darkTheme = createTheme({
   },
 });
 
-function App() {
-  // State hooks remain the same
+function ChatPage() {
+  const { user, logout } = useAuth(); // Get user info and logout function
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [conversationId, setConversationId] = useState(null);
+  const [conversationId, setConversationId] = useState(null); // Keep managing conversation ID locally
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const messagesEndRef = useRef(null);
 
-  // Scroll to bottom effect remains the same
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Handle sending message logic remains the same
+  // TODO: Add logic here to fetch user's past conversations list
+  // and allow selecting one, or starting new.
+  // For now, it always starts a new conversation on page load.
+  useEffect(() => {
+    // Reset conversation ID when the component mounts or user changes
+    setConversationId(null);
+    setMessages([]); // Clear messages for a clean start
+    // You might fetch the last active conversation ID for the user here instead
+  }, [user]); // Reset when user changes (e.g., after logout/login)
+
   const handleSendMessage = async (event) => {
     if (event) event.preventDefault();
     const userMessageText = inputValue.trim();
     if (!userMessageText || isLoading) return;
 
     const newUserMessage = { sender: "user", text: userMessageText };
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+    // Use functional update to ensure state consistency
+    setMessages((prev) => [...prev, newUserMessage]);
     setInputValue("");
     setIsLoading(true);
     setError(null);
 
     try {
-      const payload = {
-        user_message: userMessageText,
-        conversation_id: conversationId,
-      };
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      // Use the imported sendMessage function which includes the token
+      const response = await sendMessage(userMessageText, conversationId);
+      const data = response.data; // Axios wraps response in .data
 
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ detail: "Unknown API error" }));
-        throw new Error(
-          `HTTP error ${response.status}: ${
-            errorData.detail || response.statusText
-          }`
-        );
-      }
-
-      const data = await response.json();
+      console.log("Received from API:", data);
       const newAiMessage = { sender: "ai", text: data.ai_response };
-      setMessages((prevMessages) => [...prevMessages, newAiMessage]);
-      setConversationId(data.conversation_id);
+      setMessages((prev) => [...prev, newAiMessage]);
+      setConversationId(data.conversation_id); // Update conversation ID
     } catch (err) {
+      // Axios errors often have response data
+      const errorMsg =
+        err.response?.data?.detail || err.message || "Failed to send message.";
       console.error("Failed to send message:", err);
-      setError(`Error: ${err.message}`);
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    // Navigation to /login will happen automatically if this page
+    // is wrapped in ProtectedRoute and token becomes null.
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      {/* Outer Box: Takes full viewport height and width */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100vh", // Full viewport height is key
-          bgcolor: "background.default", // Apply background color here
-        }}
-      >
-        {/* Container: Centers content and sets max width for readability */}
-        <Container
-          maxWidth="md" // Adjust max width: 'sm', 'md', 'lg', 'xl', or false to disable
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+        {/* Header Bar */}
+        <AppBar position="static" elevation={1}>
+          <Toolbar variant="dense">
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              AI Chat Assistant
+            </Typography>
+            {user && (
+              <Typography variant="caption" sx={{ mr: 2 }}>
+                Logged in as: {user.username}
+              </Typography>
+            )}
+            <IconButton
+              color="inherit"
+              onClick={handleLogout}
+              aria-label="logout"
+            >
+              <LogoutIcon />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        {/* Main Chat Area using Box */}
+        <Box
           sx={{
             display: "flex",
             flexDirection: "column",
-            flexGrow: 1, // Allow container to grow vertically
-            py: 2, // Add vertical padding inside the container
-            overflow: "hidden", // Prevent container itself from scrolling
+            flexGrow: 1, // Take remaining space
+            maxWidth: "900px", // Wider chat
+            width: "100%",
+            mx: "auto", // Center horizontally
+            p: { xs: 1, sm: 2 }, // Responsive padding
+            overflow: "hidden", // Prevent content spill
           }}
         >
-          <Typography
-            variant="h5"
-            component="h1"
-            sx={{ textAlign: "center", mb: 2, color: "text.primary" }}
-          >
-            AI Chat Assistant
-          </Typography>
-
           {/* Message List Area */}
           <Paper
-            elevation={2}
+            elevation={0} // Flat look for message area
             sx={{
-              flexGrow: 1, // Take available vertical space within Container
-              overflowY: "auto", // Enable scrolling *only* for messages
+              flexGrow: 1,
+              overflowY: "auto",
               mb: 1,
               p: 2,
-              bgcolor: "background.paper",
+              bgcolor: "background.default", // Match main background or use paper
               // Scrollbar styling (optional)
               "&::-webkit-scrollbar": { width: "8px" },
               "&::-webkit-scrollbar-track": {
-                backgroundColor: "background.default",
+                backgroundColor: "background.paper",
               },
               "&::-webkit-scrollbar-thumb": {
                 backgroundColor: "action.disabled",
@@ -147,6 +154,7 @@ function App() {
             }}
           >
             <List sx={{ padding: 0 }}>
+              {/* ... (mapping messages logic remains the same as before) ... */}
               {messages.map((msg, index) => (
                 <ListItem
                   key={index}
@@ -165,11 +173,8 @@ function App() {
                       py: 1,
                       maxWidth: "75%",
                       bgcolor:
-                        msg.sender === "user" ? "primary.main" : "grey.700",
-                      color:
-                        msg.sender === "user"
-                          ? "primary.contrastText"
-                          : "common.white",
+                        msg.sender === "user" ? "primary.dark" : "grey.700",
+                      color: "common.white",
                       borderRadius:
                         msg.sender === "user"
                           ? "15px 0px 15px 15px"
@@ -214,8 +219,9 @@ function App() {
           <Box
             component="form"
             onSubmit={handleSendMessage}
-            sx={{ display: "flex", gap: 1, alignItems: "center", pt: 1 }} // Add slight padding top
+            sx={{ display: "flex", gap: 1, alignItems: "center", p: 1 }}
           >
+            {/* ... (TextField and Button remain the same as before) ... */}
             <TextField
               fullWidth
               variant="outlined"
@@ -237,17 +243,20 @@ function App() {
               variant="contained"
               disabled={isLoading || !inputValue.trim()}
               endIcon={<SendIcon />}
-              sx={{ height: "40px" }} // Match TextField height
+              sx={{ height: "40px" }}
             >
               Send
             </Button>
           </Box>
-        </Container>{" "}
-        {/* End of Content Container */}
+        </Box>{" "}
+        {/* End Main Chat Area Box */}
       </Box>{" "}
-      {/* End of Full Height/Width Box */}
+      {/* End Full Height Box */}
     </ThemeProvider>
   );
 }
 
-export default App;
+// Helper function to create theme (can be moved to a separate file like src/theme.js)
+import { createTheme } from "@mui/material/styles";
+
+export default ChatPage; // Export the ChatPage component

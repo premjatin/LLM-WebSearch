@@ -1,5 +1,30 @@
-/venv
-/vector_store_data
-/__pycache__/
-/.vscode/
-/.history
+# Python Virtual Environment
+venv/
+*.pyc
+__pycache__/
+
+# Secrets / Config - IMPORTANT!
+.env
+*.env.*
+frontend/.env*
+
+# RAG Data / DBs
+vector_store_data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend build / dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# IDE / OS specific
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

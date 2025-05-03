@@ -1,3 +1,4 @@
+/*
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -73,16 +74,17 @@ body,
   margin: 0;
   padding: 0;
   box-sizing: border-box; /* Include padding and border in element's total width and height */
-}
-
+/*}
+/*
 *,
 *::before,
 *::after {
   box-sizing: inherit;
 }
 
-/* Optional: Add basic font smoothing */
+/* Optional: Add basic font smoothing *//*
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+*/

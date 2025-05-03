@@ -18,7 +18,10 @@ class Settings(BaseSettings):
     vector_store_path: str = str(BASE_DIR / "vector_store_data") # Use absolute path
     faiss_index_file: str = "faiss_index.bin"
     faiss_metadata_file: str = "faiss_metadata.pkl"
-
+    jwt_secret_key: str = "default_secret_needs_override"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 30
+    
     class Config:
         # Load variables from .env file located in the base directory
         env_file = BASE_DIR / ".env"
